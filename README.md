@@ -8,11 +8,11 @@ Disclaimer: Proyek ini hanya untuk pembelajaran dan komunikasi pribadi, mohon ja
 Credit aplikasi full to [Gozargah crotzban](https://github.com/Gozargah), saya hanya edit sedikit untuk instalasi sederhana bagi pemula . </br>
 
 # Special Thanks to
-- [Tuhan YME] Pemilik Bumi,Makhluk dan Semestanya
+- Tuhan YME Pemilik Bumi,Makhluk dan Semestanya
 - [Gozargah](https://github.com/Gozargah/crotzban)
 - [hamid-gh98](https://github.com/hamid-gh98)
 - [x0sina](https://github.com/x0sina/crotzban-sub)
-- [Ilham Wahyudi aka bogel11] (https://www.facebook.com/ilham21012023) Donatur Utama 
+- Ilham Wahyudi aka bogel11 (https://www.facebook.com/ilham21012023) Donatur Utama 
 - [AIXXYCODE.ID] ntah sapa nama aslinya
 
 # List Protocol yang support
