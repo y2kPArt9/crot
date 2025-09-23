@@ -1,4 +1,9 @@
 #!/bin/bash
+
+apt install ruby -y
+gem install lolcat
+apt install wondershaper -y
+
 colorized_echo() {
     local color=$1
     local text=$2
@@ -35,16 +40,79 @@ if [ -f /etc/os-release ]; then
     os_name=$(grep -E '^ID=' /etc/os-release | cut -d= -f2)
     os_version=$(grep -E '^VERSION_ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
 
- if [ "$os_name" == "debian" ] && ([ "$os_version" == "11" ] || [ "$os_version" == "12" ]); then
-    supported_os=true
-    elif [ "$os_name" == "ubuntu" ] && [ "$os_version" == "20.04" ]; then
+    if [ "$os_name" == "debian" ] && [ "$os_version" == "12" ]; then
+        supported_os=true
+    elif [ "$os_name" == "debian" ] && [ "$os_version" == "11" ]; then
         supported_os=true
     fi
 fi
-apt install sudo curl -y
+
 if [ "$supported_os" != true ]; then
-    colorized_echo red "Error: Skrip ini hanya support di Debian 11/12 dan Ubuntu 20.04. Mohon gunakan OS yang di support."
+    colorized_echo red "Error: Skrip ini hanya support di Debian 12 dan Ubuntu 22.04. Mohon gunakan OS yang di support."
     exit 1
+fi
+apt install sudo curl -y
+# Fungsi untuk menambahkan repo Debian 12
+addDebian12Repo() {
+    echo "#mirror_kambing-sysadmind deb12
+deb http://kartolo.sby.datautama.net.id/debian/ bookworm contrib main non-free non-free-firmware
+deb http://kartolo.sby.datautama.net.id/debian/ bookworm-updates contrib main non-free non-free-firmware
+deb http://kartolo.sby.datautama.net.id/debian/ bookworm-proposed-updates contrib main non-free non-free-firmware
+deb http://kartolo.sby.datautama.net.id/debian/ bookworm-backports contrib main non-free non-free-firmware
+deb http://kartolo.sby.datautama.net.id/debian-security/ bookworm-security contrib main non-free non-free-firmware" | sudo tee /etc/apt/sources.list > /dev/null
+}
+
+# Fungsi untuk menambahkan repo Ubuntu 22.04
+addUbuntu2004Repo() {
+    echo "#mirror buaya klas 22.04
+deb http://kebo.pens.ac.id/ubuntu/ jammy main restricted universe multiverse
+deb http://kebo.pens.ac.id/ubuntu/ jammy-updates main restricted universe multiverse
+deb http://kebo.pens.ac.id/ubuntu/ jammy-security main restricted universe multiverse
+deb http://kebo.pens.ac.id/ubuntu/ jammy-backports main restricted universe multiverse
+deb http://kebo.pens.ac.id/ubuntu/ jammy-proposed main restricted universe multiverse" | sudo tee /etc/apt/sources.list > /dev/null
+}
+
+# Mendapatkan informasi kode negara dan OS
+COUNTRY_CODE=$(curl -s https://ipinfo.io/country)
+OS=$(lsb_release -si)
+
+# Pemeriksaan IP Indonesia
+if [[ "$COUNTRY_CODE" == "ID" ]]; then
+    colorized_echo green "IP Indonesia terdeteksi, menggunakan repositories lokal Indonesia"
+
+    # Menanyakan kepada pengguna apakah ingin menggunakan repo lokal atau repo default
+    read -p "Apakah Anda ingin menggunakan repo lokal Indonesia? (y/n): " use_local_repo
+
+    if [[ "$use_local_repo" == "y" || "$use_local_repo" == "Y" ]]; then
+        # Pemeriksaan OS untuk menambahkan repo yang sesuai
+        case "$OS" in
+            Debian)
+                VERSION=$(lsb_release -sr)
+                if [ "$VERSION" == "12" ]; then
+                    addDebian12Repo
+                else
+                    colorized_echo red "Versi Debian ini tidak didukung."
+                fi
+                ;;
+            Ubuntu)
+                VERSION=$(lsb_release -sr)
+                if [ "$VERSION" == "20.04" ]; then
+                    addUbuntu2004Repo
+                else
+                    colorized_echo red "Versi Ubuntu ini tidak didukung."
+                fi
+                ;;
+            *)
+                colorized_echo red "Sistem Operasi ini tidak didukung."
+                ;;
+        esac
+    else
+        colorized_echo yellow "Menggunakan repo bawaan VM."
+        # Tidak melakukan apa-apa, sehingga repo bawaan VM tetap digunakan
+    fi
+else
+    colorized_echo yellow "IP di luar Indonesia."
+    # Lanjutkan dengan repo bawaan OS
 fi
 
 mkdir -p /etc/data
@@ -85,27 +153,47 @@ apt-get -y --purge remove samba*;
 apt-get -y --purge remove apache2*;
 apt-get -y --purge remove sendmail*;
 apt-get -y --purge remove bind9*;
+#Optimize
 
 #install bbr
 echo 'fs.file-max = 500000
-net.core.rmem_max = 67108864
-net.core.wmem_max = 67108864
+kernel.msgmnb = 65536
+kernel.msgmax = 65536
+kernel.shmmax = 68719476736
+kernel.shmall = 4294967296
+kernel.sched_autogroup_enabled = 0
+kernel.sched_migration_cost_ns = 5000000
+net.ipv4.conf.all.accept_source_route = 0
+net.ipv4.conf.all.accept_redirects = 0
+net.ipv4.conf.all.send_redirects = 0
+net.ipv4.conf.all.rp_filter = 0
+net.ipv4.conf.default.accept_source_route = 0
+net.ipv4.conf.default.accept_redirects = 0
+net.ipv4.conf.default.send_redirects = 0
+net.ipv4.conf.default.rp_filter = 0
+net.ipv4.conf.eth0.send_redirects = 0
+net.ipv4.conf.eth0.rp_filter = 0
+net.core.rmem_max = 67108864 
+net.core.wmem_max = 67108864 
+net.core.rmem_default = 65536
+net.core.wmem_default = 65536
 net.core.netdev_max_backlog = 250000
 net.core.somaxconn = 4096
 net.ipv4.tcp_syncookies = 1
 net.ipv4.tcp_tw_reuse = 1
 net.ipv4.tcp_fin_timeout = 30
 net.ipv4.tcp_keepalive_time = 1200
-net.ipv4.ip_local_port_range = 10000 65000
+net.ipv4.ip_local_port_range = 1024 65535
 net.ipv4.tcp_max_syn_backlog = 8192
 net.ipv4.tcp_max_tw_buckets = 5000
 net.ipv4.tcp_fastopen = 3
-net.ipv4.tcp_mem = 25600 51200 102400
-net.ipv4.tcp_rmem = 4096 87380 67108864
-net.ipv4.tcp_wmem = 4096 65536 67108864
+net.ipv4.tcp_rmem = 4096 87380 8388608
+net.ipv4.tcp_wmem = 4096 87380 8388608
+net.ipv4.tcp_mem = 8388608 8388608 8388608
 net.core.rmem_max = 4000000
 net.ipv4.tcp_mtu_probing = 1
 net.ipv4.ip_forward = 1
+net.ipv4.route.flush = 1
 net.core.default_qdisc = fq
 net.ipv4.tcp_congestion_control = bbr
 net.ipv6.conf.all.disable_ipv6 = 1
@@ -113,20 +201,27 @@ net.ipv6.conf.default.disable_ipv6 = 1
 net.ipv6.conf.lo.disable_ipv6 = 1' >> /etc/sysctl.conf
 sysctl -p;
 
+#install benchmark
+wget -O /usr/bin/bench "https://raw.githubusercontent.com/y2kPArt9/CroT/main/bench" && chmod +x /usr/bin/bench
+
 #install toolkit
-apt-get install libio-socket-inet6-perl libsocket6-perl libcrypt-ssleay-perl libnet-libidn-perl perl libio-socket-ssl-perl libwww-perl libpcre3 libpcre3-dev zlib1g-dev dbus iftop zip unzip wget net-tools curl nano sed screen gnupg gnupg1 bc apt-transport-https build-essential dirmngr dnsutils sudo at htop iptables bsdmainutils cron lsof lnav -y
+apt-get install git cron libio-socket-inet6-perl libsocket6-perl libcrypt-ssleay-perl libnet-libidn-perl perl libio-socket-ssl-perl libwww-perl libpcre3 libpcre3-dev zlib1g-dev dbus iftop zip unzip wget net-tools curl nano sed screen gnupg gnupg1 bc apt-transport-https build-essential dirmngr dnsutils sudo at htop iptables bsdmainutils cron lsof lnav -y
+
+#Install lolcat
+apt-get install -y ruby;
+gem install lolcat;
 
 #Set Timezone GMT+7
 timedatectl set-timezone Asia/Jakarta;
 
 #Install Marzban
-sudo bash -c "$(curl -sL https://github.com/GawrAme/Marzban-scripts/raw/master/marzban.sh)" @ install
+sudo bash -c "$(curl -sL https://github.com/y2kPArt9/Marzban-scripts/raw/master/marzban.sh)" @ install
 
 #Install Subs
-wget -N -P /var/lib/marzban/templates/subscription/  https://raw.githubusercontent.com/GawrAme/MarLing/main/index.html
+wget -N -P /var/lib/marzban/templates/subscription/  https://raw.githubusercontent.com/y2kPArt9/CroT/main/index.html
 
 #install env
-wget -O /opt/marzban/.env "https://raw.githubusercontent.com/GawrAme/MarLing/main/env"
+wget -O /opt/marzban/.env "https://raw.githubusercontent.com/y2kPArt9/CroT/main/env"
 
 #install Assets folder
 mkdir -p /var/lib/marzban/assets
@@ -134,20 +229,20 @@ cd
 
 #profile
 echo -e 'profile' >> /root/.profile
-wget -O /usr/bin/profile "https://raw.githubusercontent.com/GawrAme/MarLing/main/profile";
+wget -O /usr/bin/profile "https://raw.githubusercontent.com/y2kPArt9/CroT/main/profile";
 chmod +x /usr/bin/profile
 apt install neofetch -y
-wget -O /usr/bin/cekservice "https://raw.githubusercontent.com/GawrAme/MarLing/main/cekservice.sh"
+wget -O /usr/bin/cekservice "https://raw.githubusercontent.com/y2kPArt9/CroT/main/cekservice.sh"
 chmod +x /usr/bin/cekservice
 
 #install compose
-wget -O /opt/marzban/docker-compose.yml "https://raw.githubusercontent.com/GawrAme/MarLing/main/docker-compose.yml"
+wget -O /opt/marzban/docker-compose.yml "https://raw.githubusercontent.com/y2kPArt9/CroT/main/docker-compose.yml"
 
 #Install VNSTAT
 apt -y install vnstat
 /etc/init.d/vnstat restart
 apt -y install libsqlite3-dev
-wget https://github.com/GawrAme/MarLing/raw/main/vnstat-2.6.tar.gz
+wget https://github.com/y2kPArt9/CroT/raw/main/vnstat-2.6.tar.gz
 tar zxvf vnstat-2.6.tar.gz
 cd vnstat-2.6
 ./configure --prefix=/usr --sysconfdir=/etc && make && make install 
@@ -158,19 +253,31 @@ systemctl enable vnstat
 rm -f /root/vnstat-2.6.tar.gz 
 rm -rf /root/vnstat-2.6
 
+# Swap RAM 1GB
+wget https://github.com/y2kPArt9/Swap/raw/refs/heads/master/swap.sh -O swap
+sh swap 1G
+rm swap
+
 #Install Speedtest
 curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | sudo bash
 sudo apt-get install speedtest -y
+
+#install gotop
+git clone --depth 1 https://github.com/y2kPArt9/gotop /tmp/gotop
+/tmp/gotop/scripts/download.sh
+cp /root/gotop /usr/bin/
+chmod +x /usr/bin/gotop
+cd
 
 #install nginx
 mkdir -p /var/log/nginx
 touch /var/log/nginx/access.log
 touch /var/log/nginx/error.log
-wget -O /opt/marzban/nginx.conf "https://raw.githubusercontent.com/GawrAme/MarLing/main/nginx.conf"
-wget -O /opt/marzban/default.conf "https://raw.githubusercontent.com/GawrAme/MarLing/main/vps.conf"
-wget -O /opt/marzban/xray.conf "https://raw.githubusercontent.com/GawrAme/MarLing/main/xray.conf"
+wget -O /opt/marzban/nginx.conf "https://raw.githubusercontent.com/y2kPArt9/CroT/main/nginx.conf"
+wget -O /opt/marzban/default.conf "https://raw.githubusercontent.com/y2kPArt9/CroT/main/vps.conf"
+wget -O /opt/marzban/xray.conf "https://raw.githubusercontent.com/y2kPArt9/CroT/main/xray.conf"
 mkdir -p /var/www/html
-echo "<pre>Setup by AutoScript LingVPN</pre>" > /var/www/html/index.html
+echo "<pre>Setup by AutoScript tonho888</pre>" > /var/www/html/index.html
 
 #install socat
 apt install iptables -y
@@ -181,25 +288,34 @@ apt install socat cron bash-completion -y
 curl https://get.acme.sh | sh -s email=$email
 /root/.acme.sh/acme.sh --server letsencrypt --register-account -m $email --issue -d $domain --standalone -k ec-256 --debug
 ~/.acme.sh/acme.sh --installcert -d $domain --fullchainpath /var/lib/marzban/xray.crt --keypath /var/lib/marzban/xray.key --ecc
-wget -O /var/lib/marzban/xray_config.json "https://raw.githubusercontent.com/GawrAme/MarLing/main/xray_config.json"
+wget -O /var/lib/marzban/xray_config.json "https://raw.githubusercontent.com/y2kPArt9/CroT/main/xray_config.json"
 
-#install firewall
+#install Firewall
 apt install ufw -y
+apt install fail2ban -y
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
 sudo ufw allow ssh
 sudo ufw allow http
 sudo ufw allow https
-sudo ufw allow 8081/tcp
 sudo ufw allow 1080/tcp
-sudo ufw allow 1080/udp
+sudo ufw allow 2082/tcp
+sudo ufw allow 2083/tcp
+sudo ufw allow 3128/tcp
+sudo ufw allow 8080/tcp
+sudo ufw allow 8443/tcp
+sudo ufw allow 8880/tcp
+sudo ufw allow 8081/tcp
+sudo ufw allow $port/tcp
 yes | sudo ufw enable
+systemctl enable ufw
+systemctl start ufw
 
 #install database
-wget -O /var/lib/marzban/db.sqlite3 "https://github.com/GawrAme/MarLing/raw/main/db.sqlite3"
+wget -O /var/lib/marzban/db.sqlite3 "https://github.com/y2kPArt9/CroT/raw/main/db.sqlite3"
 
 #install WARP Proxy
-wget -O /root/warp "https://raw.githubusercontent.com/hamid-gh98/x-ui-scripts/main/install_warp_proxy.sh"
+wget -O /root/warp "https://raw.githubusercontent.com/y2kPArt9/x-ui-scripts/main/install_warp_proxy.sh"
 sudo chmod +x /root/warp
 sudo bash /root/warp -y 
 
@@ -231,10 +347,6 @@ echo -e "Untuk data login dashboard Marzban:
 URL HTTPS : https://${domain}/dashboard 
 username  : ${userpanel}
 password  : ${passpanel}
--=================================-
-Jangan lupa join Channel & Grup Telegram saya juga di
-Telegram Channel: https://t.me/LingVPN
-Telegram Group: https://t.me/LingVPN_Group
 -=================================-" > /root/log-install.txt
 profile
 colorized_echo green "Script telah berhasil di install"
