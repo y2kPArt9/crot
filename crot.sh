@@ -46,10 +46,7 @@ if [ "$supported_os" != true ]; then
     colorized_echo red "Error: Skrip ini hanya support di Debian 12 dan Ubuntu 22.04. Mohon gunakan OS yang di support."
     exit 1
 fi
-apt install sudo curl -y
-apt install ruby -y
-gem install lolcat
-apt install wondershaper -y
+apt install sudo curl wget gnupg -y
 # Fungsi untuk menambahkan repo Debian 12
 addDebian12Repo() {
     echo "#mirror_kambing-sysadmind deb12
@@ -236,6 +233,7 @@ rm swap
 
 #Install Speedtest
 curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | sudo bash
+sudo apt update -y
 sudo apt-get install speedtest -y
 
 #install gotop
