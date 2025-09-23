@@ -1,9 +1,4 @@
 #!/bin/bash
-
-apt install ruby -y
-gem install lolcat
-apt install wondershaper -y
-
 colorized_echo() {
     local color=$1
     local text=$2
@@ -52,6 +47,9 @@ if [ "$supported_os" != true ]; then
     exit 1
 fi
 apt install sudo curl -y
+apt install ruby -y
+gem install lolcat
+apt install wondershaper -y
 # Fungsi untuk menambahkan repo Debian 12
 addDebian12Repo() {
     echo "#mirror_kambing-sysadmind deb12
@@ -157,52 +155,30 @@ apt-get -y --purge remove bind9*;
 
 #install bbr
 echo 'fs.file-max = 500000
-kernel.msgmnb = 65536
-kernel.msgmax = 65536
-kernel.shmmax = 68719476736
-kernel.shmall = 4294967296
-kernel.sched_autogroup_enabled = 0
-kernel.sched_migration_cost_ns = 5000000
-net.ipv4.conf.all.accept_source_route = 0
-net.ipv4.conf.all.accept_redirects = 0
-net.ipv4.conf.all.send_redirects = 0
-net.ipv4.conf.all.rp_filter = 0
-net.ipv4.conf.default.accept_source_route = 0
-net.ipv4.conf.default.accept_redirects = 0
-net.ipv4.conf.default.send_redirects = 0
-net.ipv4.conf.default.rp_filter = 0
-net.ipv4.conf.eth0.send_redirects = 0
-net.ipv4.conf.eth0.rp_filter = 0
-net.core.rmem_max = 67108864 
-net.core.wmem_max = 67108864 
-net.core.rmem_default = 65536
-net.core.wmem_default = 65536
+net.core.rmem_max = 67108864
+net.core.wmem_max = 67108864
 net.core.netdev_max_backlog = 250000
 net.core.somaxconn = 4096
 net.ipv4.tcp_syncookies = 1
 net.ipv4.tcp_tw_reuse = 1
 net.ipv4.tcp_fin_timeout = 30
 net.ipv4.tcp_keepalive_time = 1200
-net.ipv4.ip_local_port_range = 1024 65535
+net.ipv4.ip_local_port_range = 10000 65000
 net.ipv4.tcp_max_syn_backlog = 8192
 net.ipv4.tcp_max_tw_buckets = 5000
 net.ipv4.tcp_fastopen = 3
-net.ipv4.tcp_rmem = 4096 87380 8388608
-net.ipv4.tcp_wmem = 4096 87380 8388608
-net.ipv4.tcp_mem = 8388608 8388608 8388608
+net.ipv4.tcp_mem = 25600 51200 102400
+net.ipv4.tcp_rmem = 4096 87380 67108864
+net.ipv4.tcp_wmem = 4096 65536 67108864
 net.core.rmem_max = 4000000
 net.ipv4.tcp_mtu_probing = 1
 net.ipv4.ip_forward = 1
-net.ipv4.route.flush = 1
 net.core.default_qdisc = fq
 net.ipv4.tcp_congestion_control = bbr
 net.ipv6.conf.all.disable_ipv6 = 1
 net.ipv6.conf.default.disable_ipv6 = 1
 net.ipv6.conf.lo.disable_ipv6 = 1' >> /etc/sysctl.conf
 sysctl -p;
-
-#install benchmark
-wget -O /usr/bin/bench "https://raw.githubusercontent.com/y2kPArt9/CroT/main/bench" && chmod +x /usr/bin/bench
 
 #install toolkit
 apt-get install git cron libio-socket-inet6-perl libsocket6-perl libcrypt-ssleay-perl libnet-libidn-perl perl libio-socket-ssl-perl libwww-perl libpcre3 libpcre3-dev zlib1g-dev dbus iftop zip unzip wget net-tools curl nano sed screen gnupg gnupg1 bc apt-transport-https build-essential dirmngr dnsutils sudo at htop iptables bsdmainutils cron lsof lnav -y
@@ -289,6 +265,12 @@ curl https://get.acme.sh | sh -s email=$email
 /root/.acme.sh/acme.sh --server letsencrypt --register-account -m $email --issue -d $domain --standalone -k ec-256 --debug
 ~/.acme.sh/acme.sh --installcert -d $domain --fullchainpath /var/lib/marzban/xray.crt --keypath /var/lib/marzban/xray.key --ecc
 wget -O /var/lib/marzban/xray_config.json "https://raw.githubusercontent.com/y2kPArt9/CroT/main/xray_config.json"
+
+#Install reboot dan expired otomatis
+wget -O /usr/bin/reboot_otomatis "https://raw.githubusercontent.com/y2kPArt9/CroT/refs/heads/main/reboot_otomatis";
+chmod +x /usr/bin/reboot_otomatis;
+echo "00 1 * * * root /usr/bin/expired" >> /etc/cron.d/expired_otomatis;
+systemctl restart cron;
 
 #install Firewall
 apt install ufw -y
