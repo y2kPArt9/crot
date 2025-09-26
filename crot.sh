@@ -295,9 +295,9 @@ systemctl start ufw
 wget -O /var/lib/marzban/db.sqlite3 "https://github.com/y2kPArt9/CroT/raw/main/db.sqlite3"
 
 #install WARP Proxy
-wget -O /root/warp "https://raw.githubusercontent.com/y2kPArt9/x-ui-scripts/main/install_warp_proxy.sh"
-sudo chmod +x /root/warp
-sudo bash /root/warp -y 
+#wget -O /root/warp "https://raw.githubusercontent.com/y2kPArt9/x-ui-scripts/main/install_warp_proxy.sh"
+#sudo chmod +x /root/warp
+#sudo bash /root/warp -y 
 
 #finishing
 apt autoremove -y
