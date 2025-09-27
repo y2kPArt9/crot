@@ -299,6 +299,12 @@ wget -O /var/lib/marzban/db.sqlite3 "https://github.com/y2kPArt9/CroT/raw/main/d
 #sudo chmod +x /root/warp
 #sudo bash /root/warp -y 
 
+#install warp
+wget -O /root/warp "https://raw.githubusercontent.com/hamid-gh98/x-ui-scripts/main/install_warp_proxy.sh"
+sudo chmod +x /root/warp
+sudo bash /root/warp -y
+rm /root/warp
+
 #finishing
 apt autoremove -y
 apt clean
